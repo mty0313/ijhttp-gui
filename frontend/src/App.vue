@@ -23,6 +23,7 @@
         @select="selectFile"
         @edit="startEdit"
         @save-name="saveFileName"
+        @delete="onDeleteFile"
       />
       <Editor
       :content="currentContent"
@@ -79,6 +80,20 @@ async function onExecuteClick() {
     console.error(e);
   } finally {
     executing.value = false;
+  }
+}
+
+async function onDeleteFile(idx) {
+  // 删除本地数据
+  files.value.splice(idx, 1);
+  fileContents.value.splice(idx, 1);
+  fileIds.value.splice(idx, 1);
+  // 处理选中项
+  if (selectedIdx.value >= files.value.length) {
+    selectedIdx.value = files.value.length - 1;
+  }
+  if (selectedIdx.value < 0) {
+    selectedIdx.value = 0;
   }
 }
 

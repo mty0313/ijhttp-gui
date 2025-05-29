@@ -62,6 +62,18 @@ export const httpFilesAPI = {
   },
 
   /**
+   * 删除HTTP文件
+   * @param {number} id - 文件ID
+   * @returns {Promise<{success: boolean, message: string}>}
+   */
+  deleteHttpFile(id) {
+    if (!id) {
+      throw new Error('File ID is required');
+    }
+    return request.post('/ijhttp/files/delete', { id });
+  },
+
+  /**
    * 执行HTTP文件
    * @param {number|number[]} fileIds - 要执行的文件ID或ID数组
    * @param {object} [options] - 执行选项

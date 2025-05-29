@@ -16,10 +16,10 @@ async function ijhttpFilesQueryHandler(request, reply) {
 async function ijhttpFilesCreateHandler(request, reply) {
     try {
         const { fileName, content } = request.body;
-        
+
         if (!fileName) {
-            return reply.code(400).send({ 
-                error: 'fileName is required' 
+            return reply.code(400).send({
+                error: 'fileName is required'
             });
         }
 
@@ -27,8 +27,8 @@ async function ijhttpFilesCreateHandler(request, reply) {
         return reply.code(201).send(result);
     } catch (error) {
         console.error('Error creating http file:', error);
-        return reply.code(500).send({ 
-            error: 'Internal server error' 
+        return reply.code(500).send({
+            error: 'Internal server error'
         });
     }
 }
@@ -38,8 +38,8 @@ async function ijhttpFilesUpdateHandler(request, reply) {
         const { id, fileName, content } = request.body;
 
         if (!id || (!fileName && !content)) {
-            return reply.code(400).send({ 
-                error: 'id and (fileName or content) are required' 
+            return reply.code(400).send({
+                error: 'id and (fileName or content) are required'
             });
         }
 
@@ -47,10 +47,31 @@ async function ijhttpFilesUpdateHandler(request, reply) {
         return reply.code(200).send(result);
     } catch (error) {
         console.error('Error updating http file:', error);
-        return reply.code(500).send({ 
-            error: 'Internal server error' 
+        return reply.code(500).send({
+            error: 'Internal server error'
         });
     }
-  }
+}
 
-module.exports = { ijhttpFilesQueryHandler, ijhttpFilesCreateHandler, ijhttpFilesUpdateHandler };
+async function ijhttpFilesDeleteHandler(request, reply) {
+    try {
+        const { id } = request.body;
+
+        if (!id) {
+            return reply.code(400).send({
+                error: 'id is required'
+            });
+        }
+
+        const result = await ijhttpFilesService.deleteHttpFile(id);
+        return reply.code(200).send(result);
+    } catch (error) {
+        console.error('Error deleting http file:', error);
+        return reply.code(500).send({
+            error: 'Internal server error'
+        });
+    }
+
+}
+
+module.exports = { ijhttpFilesQueryHandler, ijhttpFilesCreateHandler, ijhttpFilesUpdateHandler, ijhttpFilesDeleteHandler };

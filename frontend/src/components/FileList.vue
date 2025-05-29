@@ -19,10 +19,13 @@
             />
           </template>
           <template v-else>
-            {{ file.name }}
+            <span>{{ file.name }}</span>
             <span v-if="isDirty && idx === selected" class="dirty-dot"></span>
             <button @click.stop="$emit('edit', idx)" class="edit-button">
               <img :src="editIcon" alt="编辑" />
+            </button>
+            <button @click.stop="onDelete(idx)" class="delete-button" title="删除">
+              <img :src="deleteIcon" alt="删除" />
             </button>
           </template>
         </li>
@@ -34,6 +37,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import editIcon from '../assets/edit.svg';
+import deleteIcon from '../assets/delete.svg';
 import { httpFilesAPI } from '../remotes/ijhttp-api';
 
 const props = defineProps({
@@ -51,7 +55,7 @@ const props = defineProps({
   isDirty: Boolean // 新增
 });
 
-const emit = defineEmits(["add", "select", "edit", "save-name"]);
+const emit = defineEmits(["add", "select", "edit", "save-name", "delete"]);
 
 const inputName = ref("");
 watch([
@@ -74,6 +78,20 @@ const save = async (e) => {
 };
 
 const cancel = () => emit("edit", -1);
+
+const onDelete = async (idx) => {
+  const file = props.files[idx];
+  if (!file) return;
+  if (confirm(`确定要删除文件 "${file.name}" 吗？`)) {
+    try {
+      await httpFilesAPI.deleteHttpFile(file.id);
+      emit('delete', idx);
+    } catch (e) {
+      alert('删除失败');
+      console.error(e);
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -155,6 +173,31 @@ const cancel = () => emit("edit", -1);
 }
 
 .file-list li button.edit-button:hover img {
+  opacity: 1;
+}
+
+.file-list li button.delete-button {
+  padding: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  margin-left: 2px;
+}
+
+.file-list li button.delete-button:hover {
+  background: #ffeaea;
+}
+
+.file-list li button.delete-button img {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+.file-list li button.delete-button:hover img {
   opacity: 1;
 }
 

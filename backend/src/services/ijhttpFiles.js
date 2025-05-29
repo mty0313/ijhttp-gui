@@ -13,7 +13,7 @@ class IjhttpFilesService {
     const offset = (page - 1) * pageSize;
 
     // 查询数据
-    const files = db.prepare('SELECT * FROM http_files ORDER BY created_at DESC LIMIT ? OFFSET ?')
+    const files = db.prepare('SELECT * FROM http_files ORDER BY updated_at DESC LIMIT ? OFFSET ?')
       .all(pageSize, offset);
 
     return {
@@ -42,6 +42,26 @@ class IjhttpFilesService {
       filename: fileName,
       content: content
     };
+  }
+
+  /**
+   * 按照id删除HTTP文件
+   * @param {*} id 记录id
+   * @returns {Promise<{success: boolean, message: string}>}
+   */
+  async deleteHttpFile(id) {
+    if (!id) {
+      throw new Error('File ID is required');
+    }
+
+    const stmt = db.prepare('DELETE FROM http_files WHERE id = ?');
+    const result = stmt.run(id);
+
+    if (result.changes === 0) {
+      throw new Error('File not found');
+    }
+
+    return { success: true, message: 'File deleted successfully' };
   }
 
   /**

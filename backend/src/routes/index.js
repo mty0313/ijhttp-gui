@@ -1,6 +1,6 @@
 const db = require('../services/db');
 const { ijhttpHandler } = require('../controllers/ijhttpController');
-const { ijhttpFilesQueryHandler, ijhttpFilesCreateHandler, ijhttpFilesUpdateHandler } = require('../controllers/ijhttpFilesController');
+const { ijhttpFilesQueryHandler, ijhttpFilesCreateHandler, ijhttpFilesUpdateHandler, ijhttpFilesDeleteHandler } = require('../controllers/ijhttpFilesController');
 
 function setRoutes(fastify) {
     // ping
@@ -19,6 +19,9 @@ function setRoutes(fastify) {
 
     // 处理文件更新接口
     fastify.post('/api/ijhttp/files/update', ijhttpFilesUpdateHandler);
+
+    // 处理文件删除接口
+    fastify.post('/api/ijhttp/files/delete', ijhttpFilesDeleteHandler);
 }
 
 module.exports = setRoutes;
