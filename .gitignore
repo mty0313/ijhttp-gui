@@ -138,3 +138,6 @@ dist
 .DS_Store
 
 tests/
+
+# Database files
+backend/db/data.db

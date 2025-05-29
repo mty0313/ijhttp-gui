@@ -9,7 +9,7 @@ function setRoutes(fastify) {
     });
 
     // 调用 ijhttp 的接口
-    fastify.post('/api/ijhttp', ijhttpHandler);
+    fastify.post('/api/ijhttp/execute', ijhttpHandler);
 
     // 处理文件查询接口
     fastify.post('/api/ijhttp/files/query', ijhttpFilesQueryHandler);

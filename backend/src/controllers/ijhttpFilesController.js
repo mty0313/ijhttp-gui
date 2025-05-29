@@ -17,9 +17,9 @@ async function ijhttpFilesCreateHandler(request, reply) {
     try {
         const { fileName, content } = request.body;
         
-        if (!fileName || !content) {
+        if (!fileName) {
             return reply.code(400).send({ 
-                error: 'fileName and content are required' 
+                error: 'fileName is required' 
             });
         }
 
@@ -37,9 +37,9 @@ async function ijhttpFilesUpdateHandler(request, reply) {
     try {
         const { id, fileName, content } = request.body;
 
-        if (!id || !fileName || !content) {
+        if (!id || (!fileName && !content)) {
             return reply.code(400).send({ 
-                error: 'id, fileName and content are required' 
+                error: 'id and (fileName or content) are required' 
             });
         }
 

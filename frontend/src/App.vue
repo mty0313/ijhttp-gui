@@ -1,105 +1,180 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { httpFilesAPI } from './remotes/backendReq'
-import * as monaco from 'monaco-editor'
-import './monaco/http'  // 导入 HTTP 语言支持
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { httpFilesAPI } from "./remotes/ijhttp-api";
+import * as monaco from "monaco-editor";
+import "./monaco/http"; // 导入 HTTP 语言支持
 
-const httpFiles = ref([])
-const selectedIdx = ref(0)
-const fileContent = ref('')
-const fileContents = ref([])
-const editorRef = ref(null)
-let monacoEditor = null
+const httpFiles = ref([]);
+const fileIds = ref([]); // 存储文件ID
+const selectedIdx = ref(0);
+const fileContent = ref("");
+const fileContents = ref([]);
+const editorRef = ref(null);
+let monacoEditor = null;
+const isDirty = ref(false); // 标记文件是否有未保存的更改
 
-const isEditing = ref(-1)
-const editingName = ref('')
+const isEditing = ref(-1);
+const editingName = ref("");
+
+// 添加新文件
+const addNewFile = async () => {
+  // 创建新文件
+  try {
+    const result = await httpFilesAPI.createHttpFile("新建请求文件", "");
+    
+    // 更新本地数据
+    httpFiles.value.unshift(result.filename);
+    fileContents.value.unshift(result.content);
+    fileIds.value.unshift(result.id);
+    
+    // 更新选中状态
+    selectedIdx.value = 0;
+    
+    // 设置为编辑状态
+    isEditing.value = 0;
+    editingName.value = result.filename;
+    
+    // 更新编辑器内容
+    if (monacoEditor) {
+      monacoEditor.setValue("");
+      isDirty.value = false;
+    }
+  } catch (error) {
+    console.error("Failed to create new file:", error);
+  }
+};
 
 const startEdit = (idx, event) => {
-  event.stopPropagation()
-  isEditing.value = idx
-  editingName.value = httpFiles.value[idx]
-}
+  event.stopPropagation();
+  isEditing.value = idx;
+  editingName.value = httpFiles.value[idx];
+};
 
 const saveFileName = async (idx, event) => {
-  event.stopPropagation()
-  const oldName = httpFiles.value[idx]
-  const newName = editingName.value.trim()
-  
+  event.stopPropagation();
+  const oldName = httpFiles.value[idx];
+  const newName = editingName.value.trim();
+
   if (newName && newName !== oldName) {
     try {
-      // 更新文件名
-      httpFiles.value[idx] = newName
-      // TODO: 调用后端 API 更新文件名
+      const id = fileIds.value[idx];
+      if (!id) {
+        throw new Error("File ID not found");
+      }
+      // 只更新文件名
+      await httpFilesAPI.updateHttpFile(id, newName);
+      httpFiles.value[idx] = newName;
     } catch (error) {
-      console.error('Failed to rename file:', error)
+      console.error("Failed to rename file:", error);
       // 恢复原名
-      httpFiles.value[idx] = oldName
+      httpFiles.value[idx] = oldName;
     }
   }
-  isEditing.value = -1
-}
+  isEditing.value = -1;
+};
 
 const handleKeyDown = (idx, event) => {
-  if (event.key === 'Enter') {
-    saveFileName(idx, event)
-  } else if (event.key === 'Escape') {
-    isEditing.value = -1
-    editingName.value = httpFiles.value[idx]
+  if (event.key === "Enter") {
+    saveFileName(idx, event);
+  } else if (event.key === "Escape") {
+    isEditing.value = -1;
+    editingName.value = httpFiles.value[idx];
   }
-}
+};
 
 const fetchFiles = async () => {
   try {
-    const response = await httpFilesAPI.queryFiles()
-    const files = response.data || []
-    httpFiles.value = files.map(file => file.filename)
-    fileContents.value = files.map(file => file.content)
+    const response = await httpFilesAPI.queryFiles();
+    const files = response.data || [];
+    httpFiles.value = files.map((file) => file.filename);
+    fileContents.value = files.map((file) => file.content);
+    fileIds.value = files.map((file) => file.id);
   } catch (error) {
-    console.error('Failed to fetch files:', error)
+    console.error("Failed to fetch files:", error);
   }
-}
+};
 
 const selectFile = (idx) => {
-  selectedIdx.value = idx
-  if (monacoEditor) {
-    monacoEditor.setValue(fileContents.value[idx] || '')
+  // 检查当前文件是否有未保存的更改
+  if (isDirty.value) {
+    // 这里可以添加提示，询问用户是否保存更改
+    console.warn('有未保存的更改');
   }
-}
+  selectedIdx.value = idx;
+  if (monacoEditor) {
+    monacoEditor.setValue(fileContents.value[idx] || "");
+    isDirty.value = false; // 重置dirty状态
+  }
+};
 
 const onEdit = () => {
   if (monacoEditor) {
-    fileContents.value[selectedIdx.value] = monacoEditor.getValue()
+    fileContents.value[selectedIdx.value] = monacoEditor.getValue();
+    isDirty.value = true;
   }
-}
+};
+
+const saveCurrentFile = async () => {
+  if (!monacoEditor || !isDirty.value) return;
+
+  try {
+    const currentId = fileIds.value[selectedIdx.value];
+    if (!currentId) {
+      throw new Error("File ID not found");
+    }
+
+    const content = monacoEditor.getValue();
+    await httpFilesAPI.updateHttpFile(currentId, undefined, content);
+    isDirty.value = false;
+  } catch (error) {
+    console.error("Failed to save file:", error);
+  }
+};
 
 const executeRequest = async () => {
-  if (!monacoEditor) return
-  
-  const content = monacoEditor.getValue()
-  try {
-    // TODO: 实现 HTTP 请求执行
-    console.log('Executing request:', content)
-  } catch (error) {
-    console.error('Failed to execute request:', error)
+  if (!monacoEditor || selectedIdx.value === undefined) return;
+
+  // 如果有未保存的更改，先保存
+  if (isDirty.value) {
+    await saveCurrentFile();
   }
-}
+
+  try {
+    const currentId = fileIds.value[selectedIdx.value];
+    if (!currentId) {
+      throw new Error("无效的文件ID");
+    }
+
+    // 调用 API 执行 HTTP 请求
+    const result = await httpFilesAPI.executeHttpFiles(currentId, {
+      // 这里可以添加其他选项
+      logLevel: 'debug'
+    });
+
+    // TODO: 在界面上展示执行结果
+    console.log("请求执行结果:", result);
+  } catch (error) {
+    console.error("执行请求失败:", error);
+    // TODO: 在界面上显示错误信息
+  }
+};
 
 onMounted(async () => {
-  await fetchFiles()
-  
+  await fetchFiles();
+
   // 初始化 Monaco Editor
   monacoEditor = monaco.editor.create(editorRef.value, {
-    value: fileContents.value[selectedIdx.value] || '',
-    language: 'http',
-    theme: 'vs-light',
+    value: fileContents.value[selectedIdx.value] || "",
+    language: "http",
+    theme: "vs-light",
     fontSize: 14,
     fontFamily: "'Fira Code', 'Source Code Pro', Consolas, monospace",
     minimap: { enabled: true },
-    lineNumbers: 'on',
+    lineNumbers: "on",
     scrollBeyondLastLine: false,
     automaticLayout: true,
     tabSize: 2,
-    renderWhitespace: 'boundary',
+    renderWhitespace: "boundary",
     rulers: [80, 120],
     bracketPairColorization: { enabled: true },
     guides: {
@@ -109,29 +184,34 @@ onMounted(async () => {
     // HTTP 文件特定配置
     formatOnType: true,
     formatOnPaste: true,
-    snippetSuggestions: 'top',
+    snippetSuggestions: "top",
     suggest: {
-      showKeywords: true
-    }
-  })
+      showKeywords: true,
+    },
+  });
 
   // 监听编辑器内容变化
   monacoEditor.onDidChangeModelContent(() => {
-    onEdit()
-  })
-})
+    onEdit();
+  });
+
+  // 添加保存快捷键
+  monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    saveCurrentFile();
+  });
+});
 
 onBeforeUnmount(() => {
   if (monacoEditor) {
-    monacoEditor.dispose()
+    monacoEditor.dispose();
   }
-})
+});
 
 watch(selectedIdx, (newIdx) => {
   if (monacoEditor) {
-    monacoEditor.setValue(fileContents.value[newIdx] || '')
+    monacoEditor.setValue(fileContents.value[newIdx] || "");
   }
-})
+});
 </script>
 
 <template>
@@ -139,6 +219,15 @@ watch(selectedIdx, (newIdx) => {
     <div class="tabbar">
       <div class="tabbar-title">ijhttp-gui</div>
       <div class="tabbar-right">
+        <button 
+          class="save-button" 
+          @click="saveCurrentFile" 
+          :disabled="!isDirty" 
+          :class="{ 'button-disabled': !isDirty }"
+          title="保存 (⌘S)"
+        >
+          保存
+        </button>
         <button class="execute-button" @click="executeRequest" title="执行请求">
           <span class="execute-icon">▶</span>
           执行
@@ -147,11 +236,17 @@ watch(selectedIdx, (newIdx) => {
     </div>
     <div class="container">
       <div class="sidebar">
+        <div class="sidebar-header">
+          <button class="add-file-button" @click="addNewFile" title="新建请求文件">
+            <span class="add-icon">+</span>
+            新建
+          </button>
+        </div>
         <ul>
-          <li 
-            v-for="(file, idx) in httpFiles" 
-            :key="file" 
-            :class="{active: idx === selectedIdx}"
+          <li
+            v-for="(file, idx) in httpFiles"
+            :key="file"
+            :class="{ active: idx === selectedIdx }"
             @click="selectFile(idx)"
           >
             <div v-if="isEditing === idx" class="filename-editor" @click.stop>
@@ -165,9 +260,16 @@ watch(selectedIdx, (newIdx) => {
               />
             </div>
             <div v-else class="filename-display">
-              <span>{{ file }}</span>
-              <button 
-                class="edit-button" 
+              <div class="filename-info">
+                <span 
+                  class="dirty-indicator"
+                  :class="{ 'is-dirty': idx === selectedIdx && isDirty }"
+                  title="有未保存的更改"
+                ></span>
+                <span>{{ file }}</span>
+              </div>
+              <button
+                class="edit-button"
                 @click="startEdit(idx, $event)"
                 title="编辑文件名"
               >
@@ -237,17 +339,58 @@ watch(selectedIdx, (newIdx) => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  flex: 1 1 0;
   height: 100%; /* 让sidebar始终与container等高 */
-  overflow-y: auto; /* 只允许左侧列表滚动 */
+  overflow: hidden; /* 防止整个侧边栏滚动 */
 }
+
+.sidebar-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 16px;
+  background: #f8fafc;
+  border-bottom: 1.5px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.add-file-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #1677ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-file-button:hover {
+  background: #0958d9;
+}
+
+.add-file-button:active {
+  transform: scale(0.98);
+}
+
+.add-icon {
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .sidebar ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1;
+  overflow-y: auto; /* 只允许列表部分滚动 */
+  min-height: 0; /* 关键：允许flex child收缩并启用滚动 */
 }
 .sidebar li {
   padding: 18px 24px;
@@ -322,6 +465,35 @@ watch(selectedIdx, (newIdx) => {
   font-size: 12px;
 }
 
+.save-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid #1677ff;
+  border-radius: 4px;
+  background: white;
+  color: #1677ff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-button:hover:not(.button-disabled) {
+  background: #f0f7ff;
+}
+
+.save-button:active:not(.button-disabled) {
+  transform: scale(0.98);
+}
+
+.button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #d9d9d9;
+  color: #d9d9d9;
+}
+
 textarea {
   display: none;
 }
@@ -331,6 +503,25 @@ textarea {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+.filename-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dirty-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.dirty-indicator.is-dirty {
+  background: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
 }
 
 .edit-button {
