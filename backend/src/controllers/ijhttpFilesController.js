@@ -1,7 +1,7 @@
 const ijhttpFilesService = require('../services/ijhttpFiles');
 
 async function ijhttpFilesQueryHandler(request, reply) {
-    const { page = 1, pageSize = 10 } = request.query;
+    const { page = 1, pageSize = 10 } = request.body;
 
     try {
         const filesService = require('../services/ijhttpFiles');

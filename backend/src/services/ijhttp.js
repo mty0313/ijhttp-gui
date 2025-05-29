@@ -32,7 +32,7 @@ async function runIjhttp(fileIds, options = {}) {
     try {
         // 将内容写入临时文件
         for (const file of files) {
-            const tempPath = path.join(tempDir, `${file.id}-${file.filename}`);
+            const tempPath = path.join(tempDir, `${file.id}-${file.filename}.http`);
             await fs.writeFile(tempPath, file.content);
             tempFiles.push(tempPath);
         }

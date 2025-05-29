@@ -3,7 +3,7 @@ import axios from 'axios'
 // 创建axios实例
 const request = axios.create({
   baseURL: '/api',
-  timeout: 5000
+  timeout: 60000
 })
 
 // 请求拦截器
@@ -33,8 +33,8 @@ export const httpFilesAPI = {
    * 获取所有HTTP文件列表
    * @returns {Promise<{total: number, data: Array<{id: number, filename: string, content: string}>, page: number, pageSize: number}>}
    */
-  queryFiles() {
-    return request.post('/ijhttp/files/query')
+  queryFiles(page, pageSize) {
+    return request.post('/ijhttp/files/query', { page, pageSize })
   },
 
   /**

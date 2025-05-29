@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #333333;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -29,7 +29,9 @@ body {
   width: 100vw;
   height: 100vh;
   display: block;
-  /* 移除 place-items: center; 让内容不再居中 */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 h1 {
@@ -38,22 +40,25 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #ffffff;
+  color: #333;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: #ccc;
+  background-color: #f8f8f8;
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #0066cc;
+  outline-offset: 1px;
 }
 
 .card {
