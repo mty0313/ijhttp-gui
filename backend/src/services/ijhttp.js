@@ -15,6 +15,10 @@ const url = require('url');
  * @returns {{ content: string, responsePaths: Array<{remark: string, responsePath: string, fileId: number}> }}
  */
 function addResponsePathToRequests(fileContent, tempDir, fileId, fileName) {
+    // 如果最后一行不是空行，则添加一个空行
+    if (!/\r?\n$/.test(fileContent)) {
+        fileContent += '\n';
+    }
     const requests = httpFileUtil.splitHttpRequests(fileContent);
     const lines = fileContent.split(/\r?\n/);
     let remarkMap = new Map();
