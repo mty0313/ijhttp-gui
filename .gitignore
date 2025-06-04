@@ -141,3 +141,5 @@ tests/
 
 # Database files
 backend/db/data.db
+
+tmp/

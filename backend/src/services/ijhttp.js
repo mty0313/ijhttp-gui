@@ -42,9 +42,11 @@ function addResponsePathToRequests(fileContent, tempDir, fileId, fileName) {
         let baseUrl = '';
         const urlMatch = firstLine.match(/https?:\/\/([^\s/]+)/);
         if (urlMatch) baseUrl = urlMatch[1];
-        let name = `${Date.now()}-${(remark || baseUrl || 'response')}`;
+        const timestamp = Date.now();
+        let name = `${timestamp}-${(remark || baseUrl || 'response')}`;
+        let respDisplayName = (remark || baseUrl) || `${timestamp}`
         name = name.replace(/[^a-zA-Z0-9-_]/g, '_');
-        const responsePath = `../tmp/response/${name}-${fileId}.json`;
+        const responsePath = path.join(__dirname, '../tmp/response', `${name}-${fileId}.json`);
         // 检查请求块内是否已有 >>
         const reqLines = newLines.slice(req.startLine - 1 + offset, req.endLine + offset);
         if (!reqLines.some(l => />>\s*\S+/.test(l))) {
@@ -56,7 +58,7 @@ function addResponsePathToRequests(fileContent, tempDir, fileId, fileName) {
                 offset++;
             }
         }
-        responsePaths.push({ remark: name, responsePath, fileId });
+        responsePaths.push({ remark: name, responsePath, fileId, respDisplayName });
     }
     return { content: newLines.join('\n'), responsePaths };
 }
@@ -135,8 +137,9 @@ async function runIjhttp(fileIds, options = {}) {
                 resp = null;
             }
             responses.push({
-                remark: rp.remark,
-                responsePath: rp.responsePath,
+                // remark: rp.remark,
+                respDisplayName: rp.respDisplayName,
+                // responsePath: rp.responsePath,
                 response: resp
             });
         }

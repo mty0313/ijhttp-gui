@@ -1,0 +1,8 @@
+{
+  "ignore": [
+    "**/tmp/response/*",
+    "**/tmp/response/**",
+    "**/tmp/*",
+    "**/tmp/**"
+  ]
+}
