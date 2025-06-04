@@ -16,10 +16,14 @@
               v-model="inputName"
               @keydown.enter="save"
               @keydown.esc="cancel"
+              @blur="cancel"
             />
           </template>
           <template v-else>
-            <span>{{ file.name }}</span>
+            <span
+              class="file-name"
+              :title="file.name"
+            >{{ file.name }}</span>
             <span v-if="isDirty && idx === selected" class="dirty-dot"></span>
             <button @click.stop="$emit('edit', idx)" class="edit-button">
               <img :src="editIcon" alt="编辑" />
@@ -97,108 +101,42 @@ const onDelete = async (idx) => {
 <style scoped>
 .file-list {
   width: 240px;
-  border-right: 1px solid #e0e0e0;
-  background: #f5f5f5;
+  border-right: 1px solid #e5e7eb;
+  background: #f9fafb;
   height: 100%;
   display: flex;
   flex-direction: column;
+  font-family: 'Inter', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .file-list .header {
-  padding: 10px;
-  position: sticky;
-  top: 0;
-  background: #f5f5f5;
-  z-index: 2;
+  padding: 12px 10px 8px 10px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.file-list > .header > button {
+  width: 100%;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #2563eb;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: 500;
+  transition: background 0.15s, border 0.15s;
+}
+
+.file-list > .header > button:hover {
+  background: #f3f6fa;
+  border-color: #b6d4fe;
 }
 
 .file-list .content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
-}
-
-.file-list > .header > button {
-  width: 100%;
-  padding: 8px 12px;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  color: #333;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.9em;
-}
-
-.file-list > .header > button:hover {
-  background: #f8f8f8;
-  border-color: #ccc;
-}
-
-.file-list li button {
-  padding: 2px 6px;
-  background: transparent;
-  border: none;
-  color: #999;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.file-list li:hover button {
-  opacity: 1;
-}
-
-.file-list li button:hover {
-  color: #333;
-  background: #f0f0f0;
-}
-
-.file-list li button.edit-button {
-  padding: 4px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.file-list li button.edit-button:hover {
-  background: #eee;
-}
-
-.file-list li button.edit-button img {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-.file-list li button.edit-button:hover img {
-  opacity: 1;
-}
-
-.file-list li button.delete-button {
-  padding: 4px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  margin-left: 2px;
-}
-
-.file-list li button.delete-button:hover {
-  background: #ffeaea;
-}
-
-.file-list li button.delete-button img {
-  width: 14px;
-  height: 14px;
-  opacity: 0.7;
-}
-
-.file-list li button.delete-button:hover img {
-  opacity: 1;
+  padding: 8px 0 0 0;
 }
 
 .file-list ul {
@@ -208,41 +146,103 @@ const onDelete = async (idx) => {
 }
 
 .tabs {
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 10px !important;
+  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .file-list li {
-  padding: 8px 12px;
+  padding: 0 14px;
+  height: 38px;
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border: 1px solid transparent;
-  border-radius: 4px 4px 0 0;
-  margin-bottom: -1px;
+  border-radius: 0;
+  border: none;
+  background: none;
+  color: #222;
+  font-size: 1em;
+  font-weight: 500;
+  transition: background 0.13s, color 0.13s;
+  gap: 8px;
   position: relative;
-  color: #333;
-}
-
-.file-list li:hover {
-  background: #ffffff;
-  border-color: #e0e0e0;
+  margin-bottom: 0;
 }
 
 .file-list li.selected {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-bottom-color: #ffffff;
-  z-index: 1;
+  background: #e8f0fe;
+  color: #2563eb;
+}
+
+.file-list li:hover {
+  background: #f3f6fa;
+  color: #2563eb;
+}
+
+.file-list .file-name {
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1em;
+  font-weight: 500;
+  color: inherit;
+  transition: color 0.2s;
+}
+
+.file-list li.selected .file-name,
+.file-list li:hover .file-name {
+  color: #2563eb;
+}
+
+.file-list li button {
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: none;
+  border: none;
+  margin-left: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+}
+
+.file-list li.selected button,
+.file-list li:hover button {
+  opacity: 1;
+}
+
+.file-list li button.edit-button:hover {
+  background: #e8f0fe;
+}
+
+.file-list li button.delete-button:hover {
+  background: #ffeaea;
+}
+
+.file-list li button img {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+.file-list li button:hover img {
+  opacity: 1;
 }
 
 .file-list input {
   width: 100%;
-  padding: 4px;
-  background: #2d2d2d;
-  border: 1px solid #444;
-  color: #fff;
+  padding: 4px 8px;
+  background: #f3f6fa;
+  border: 1px solid #e5e7eb;
+  color: #222;
+  border-radius: 4px;
+  font-size: 1em;
+  font-weight: 500;
 }
 
 .dirty-dot {
