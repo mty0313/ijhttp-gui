@@ -10,6 +10,7 @@
           :key="file.id || idx"
           :class="{ selected: idx === selected }"
           @click="$emit('select', idx)"
+          style="display: flex; align-items: center; justify-content: space-between;"
         >
           <template v-if="editing === idx">
             <input
@@ -20,17 +21,16 @@
             />
           </template>
           <template v-else>
-            <span
-              class="file-name"
-              :title="file.name"
-            >{{ file.name }}</span>
+            <span class="file-name" :title="file.name">{{ file.name }}</span>
             <span v-if="isDirty && idx === selected" class="dirty-dot"></span>
-            <button @click.stop="$emit('edit', idx)" class="edit-button">
-              <img :src="editIcon" alt="编辑" />
-            </button>
-            <button @click.stop="onDelete(idx)" class="delete-button" title="删除">
-              <img :src="deleteIcon" alt="删除" />
-            </button>
+            <span style="display: flex; gap: 0; margin-left: auto;">
+              <button @click.stop="$emit('edit', idx)" class="edit-button">
+                <img :src="editIcon" alt="编辑" />
+              </button>
+              <button @click.stop="onDelete(idx)" class="delete-button" title="删除">
+                <img :src="deleteIcon" alt="删除" />
+              </button>
+            </span>
           </template>
         </li>
       </ul>
@@ -156,11 +156,12 @@ const onDelete = async (idx) => {
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-radius: 0;
   border: none;
   background: none;
   color: #222;
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 500;
   transition: background 0.13s, color 0.13s;
   gap: 8px;
@@ -189,6 +190,7 @@ const onDelete = async (idx) => {
   font-weight: 500;
   color: inherit;
   transition: color 0.2s;
+  margin-right: 0;
 }
 
 .file-list li.selected .file-name,
@@ -232,6 +234,11 @@ const onDelete = async (idx) => {
 
 .file-list li button:hover img {
   opacity: 1;
+}
+
+.file-list li > .edit-button,
+.file-list li > .delete-button {
+  margin-left: 8px;
 }
 
 .file-list input {
