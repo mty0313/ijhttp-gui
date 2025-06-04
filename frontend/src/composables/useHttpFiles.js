@@ -79,9 +79,9 @@ export default function useHttpFiles() {
   }
 
   const executeRequest = async () => {
-    if (isDirty.value) await saveCurrentFile()
-    const result = await httpFilesAPI.executeHttpFiles(files.value[selectedIdx.value].id, { logLevel: 'VERBOSE' })
-    console.log('执行结果:', result)
+    if (isDirty.value) await saveCurrentFile();
+    const result = await httpFilesAPI.executeHttpFiles(files.value[selectedIdx.value].id, { logLevel: 'VERBOSE' });
+    return result; // 返回后由App.vue处理
   }
 
   const onDeleteFile = (idx) => {

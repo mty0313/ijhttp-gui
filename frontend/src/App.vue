@@ -25,13 +25,16 @@
         @save-name="saveFileName"
         @delete="onDeleteFile"
       />
-      <Editor
-      :content="currentContent"
-      :isDirty="isDirty"
-      @change="onEdit"
-      @save="saveCurrentFile"
-      @execute="onExecuteClick"
-    />
+      <div class="editor-response-wrapper">
+        <Editor
+          :content="currentContent"
+          :isDirty="isDirty"
+          @change="onEdit"
+          @save="saveCurrentFile"
+          @execute="onExecuteClick"
+        />
+        <Response :responses="responses" :fileName="fileName" />
+      </div>
     </div>
   </div>
 </template>
@@ -41,6 +44,7 @@ import { ref, computed, onMounted } from "vue";
 import FileList from "./components/FileList.vue";
 import Editor from "./components/Editor.vue";
 import useHttpFiles from "./composables/useHttpFiles";
+import Response from "./components/Response.vue";
 
 const {
   files,
@@ -65,18 +69,40 @@ const currentContent = computed(
 );
 
 const executing = ref(false);
+const responses = ref([]); // 新增响应数据
+const lastResult = ref(null); // 保存 executeRequest 的完整返回
+
+const fileName = computed(() => {
+  // executeRequest 返回的 result 结构为 { responses: [], fileName: '' }
+  // 取当前 responses 的 fileName，如果没有则取当前选中文件名
+  if (Array.isArray(responses.value) && responses.value.length > 0 && responses.value[0].fileName) {
+    return responses.value[0].fileName;
+  }
+  // 如果 executeRequest 返回的 result 有 fileName 字段
+  if (lastResult.value && lastResult.value.fileName) {
+    return lastResult.value.fileName;
+  }
+  // 兜底：取当前选中文件名
+  return files.value[selectedIdx.value]?.name || '';
+});
 
 async function onExecuteClick() {
   if (executing.value) return;
   executing.value = true;
   try {
-    // 设置超时时间，例如30秒
-    await Promise.race([
+    const result = await Promise.race([
       executeRequest(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('执行超时')), 60000))
     ]);
+    lastResult.value = result;
+    if (result && result.responses) {
+      responses.value = result.responses;
+    } else {
+      responses.value = [];
+    }
   } catch (e) {
-    // 可选：弹窗或提示错误
+    responses.value = [{ respDisplayName: 'Error', response: e.message }];
+    lastResult.value = null;
     console.error(e);
   } finally {
     executing.value = false;
@@ -187,5 +213,27 @@ onMounted(fetchFiles);
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.editor-response-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.editor-response-wrapper > .editor {
+  flex: 1 1 60%;
+  min-height: 180px;
+  max-height: 60%;
+  transition: max-height 0.2s;
+}
+
+.editor-response-wrapper > .response-panel {
+  flex: 0 0 auto;
+  min-height: 80px;
+  max-height: 260px;
+  transition: max-height 0.2s;
 }
 </style>

@@ -144,7 +144,7 @@ async function runIjhttp(fileIds, options = {}) {
             });
         }
 
-        return { ...result, responses };
+        return { ...result, responses, fileName: files[0].filename };
     } finally {
         // 清理临时文件和目录
         try {

@@ -141,6 +141,22 @@ export function validateHttpFile(model) {
         endColumn: lines[curr].length + 1
       });
     }
+    // 新增：校验请求 URL 必须以 http 或 https 开头
+    const requestLine = lines[curr].trim();
+    const urlMatch = requestLine.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|TRACE)\s+([^\s]+)/);
+    if (urlMatch) {
+      const url = urlMatch[2];
+      if (!/^https?:\/\//.test(url)) {
+        markers.push({
+          severity: monaco.MarkerSeverity.Error,
+          message: '请求 URL 必须以 http:// 或 https:// 开头',
+          startLineNumber: curr + 1,
+          startColumn: requestLine.indexOf(url) + 1,
+          endLineNumber: curr + 1,
+          endColumn: requestLine.indexOf(url) + url.length + 1
+        });
+      }
+    }
   }
   monaco.editor.setModelMarkers(model, 'http', markers);
 }
